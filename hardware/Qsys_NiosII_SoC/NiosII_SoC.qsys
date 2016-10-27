@@ -109,11 +109,16 @@
  <parameter name="projectName" value="" />
  <parameter name="sopcBorderPoints" value="false" />
  <parameter name="systemHash" value="1" />
- <parameter name="timeStamp" value="1477522516576" />
+ <parameter name="timeStamp" value="1477588131822" />
  <parameter name="useTestBenchNamingPattern" value="false" />
  <instanceScript></instanceScript>
  <interface name="clk" internal="clk.clk_in" type="clock" dir="end" />
  <interface name="reset" internal="clk.clk_in_reset" type="reset" dir="end" />
+ <interface
+   name="semaphore_conduit"
+   internal="semaphore.conduit"
+   type="conduit"
+   dir="end" />
  <module kind="clock_source" version="13.0" enabled="1" name="clk">
   <parameter name="clockFrequency" value="50000000" />
   <parameter name="clockFrequencyKnown" value="true" />
@@ -369,11 +374,6 @@
    version="13.0"
    start="clk.clk_reset"
    end="onchip_memory.reset1" />
- <connection
-   kind="reset"
-   version="13.0"
-   start="clk.clk_reset"
-   end="semaphore.reset_sink" />
  <connection kind="clock" version="13.0" start="clk.clk" end="semaphore.clock" />
  <connection
    kind="avalon"
@@ -384,6 +384,11 @@
   <parameter name="baseAddress" value="0x00011000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
+ <connection
+   kind="reset"
+   version="13.0"
+   start="clk.clk_reset"
+   end="semaphore.reset_n" />
  <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
  <interconnectRequirement for="$system" name="qsys_mm.maxAdditionalLatency" value="1" />
 </system>

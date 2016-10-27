@@ -14,8 +14,9 @@ entity Qsys_Semaphore is
         write: in std_logic;
         chipselect: in std_logic;
         address: in std_logic_vector(1 downto 0);
-        writedata: in std_logic_vector(31 downto 0);
-        readdata: out std_logic_vector(31 downto 0)
+        writedata: in std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
+        readdata: out std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
+        Q_export: out std_logic_vector(ADDRESS_WIDTH - 1 downto 0)
     );
 end Qsys_Semaphore;
 
@@ -67,7 +68,8 @@ architecture Structure OF Qsys_Semaphore is
             sem_address: out std_logic_vector(COUNTER_WIDTH - 1 downto 0);
             sem_data_in: out std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
             -- outputs to user
-            readdata: out std_logic_vector(ADDRESS_WIDTH - 1 downto 0)
+            readdata: out std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
+            Q_export: out std_logic_vector(ADDRESS_WIDTH - 1 downto 0)
         );
     end component;
     
@@ -90,7 +92,8 @@ begin
             sem_data_out => conn_data_out,
             sem_command => conn_command,
             sem_address => conn_address,
-            sem_data_in => conn_data_in
+            sem_data_in => conn_data_in,
+            Q_export => Q_export
         );
 
     Semaphore_block: semaphore

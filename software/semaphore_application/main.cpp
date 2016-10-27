@@ -81,24 +81,72 @@
 //#include <stdio.h>
 #include "sys/alt_stdio.h"
 #include "system.h"
-#include "/opt/altera/13.0sp1/nios2eds/components/altera_nios2/HAL/inc/io.h"
+#include "/home/aszdrick/altera/13.0sp1/nios2eds/components/altera_nios2/HAL/inc/io.h"
 
 int main() {
-	//  alt_putstr("Hello from Nios II!\n");
+	alt_putstr("Hello from Nios II!\n");
 
 	// Offset 0 = command, 0x1 = creation
-	IOWR_16DIRECT(SEMAPHORE_BASE, 0, 0x1);
+	IOWR_32DIRECT(SEMAPHORE_BASE, 0, 0x1);
 	// Offset 4 = address, id of semaphore, not needed by creation
 
 	// Offset 8 = data_in, size of semaphore on creation
-	IOWR_16DIRECT(SEMAPHORE_BASE, 8, 0x6);
+	IOWR_32DIRECT(SEMAPHORE_BASE , 8, 0x1);
 
-	// Ofsset 0 = status
-	int j = IORD_16DIRECT(SEMAPHORE_BASE, 0);
-	// Ofsset 4 = data_out, id of semaphore on creation
-
-	alt_printf("%d\n", j);
+	int j = 0;
+	do {
+		// Ofsset 0 = status
+		j = IORD_32DIRECT(SEMAPHORE_BASE, 0);
+		// Ofsset 4 = data_out, id of semaphore on creation
+		alt_printf("first\n");
+		alt_printf("%x\n", j);
+	} while ((j & 0x1) != 1);
+	int sid = IORD_32DIRECT(SEMAPHORE_BASE, 4);
+	alt_printf("%x\n", sid);
 	//i = (i+1) % 0xffff;
+
+	IOWR_32DIRECT(SEMAPHORE_BASE, 0, 0x3);
+	IOWR_32DIRECT(SEMAPHORE_BASE, 4, sid);
+	IOWR_32DIRECT(SEMAPHORE_BASE, 8, 0x4);
+
+	j = 0;
+	do {
+		// Ofsset 0 = status
+		j = IORD_32DIRECT(SEMAPHORE_BASE, 0);
+		// Ofsset 4 = data_out, id of semaphore on creation
+		alt_printf("second\n");
+		alt_printf("%x\n", j);
+	} while ((j & 0x1) != 1);
+
+	IOWR_32DIRECT(SEMAPHORE_BASE, 0, 0x3);
+	IOWR_32DIRECT(SEMAPHORE_BASE, 4, sid);
+	IOWR_32DIRECT(SEMAPHORE_BASE, 8, 0x7);
+
+	j = 0;
+	do {
+		// Ofsset 0 = status
+		j = IORD_32DIRECT(SEMAPHORE_BASE, 0);
+		// Ofsset 4 = data_out, id of semaphore on creation
+		alt_printf("third\n");
+		alt_printf("%x\n", j);
+	} while ((j & 0x1) != 1);
+
+	IOWR_32DIRECT(SEMAPHORE_BASE, 0, 0x4);
+	IOWR_32DIRECT(SEMAPHORE_BASE, 4, sid);
+	IOWR_32DIRECT(SEMAPHORE_BASE, 8, 0x0);
+
+	j = 0;
+	int resumed = 0;
+	do {
+		// Ofsset 0 = status
+		j = IORD_32DIRECT(SEMAPHORE_BASE, 0);
+		resumed = resumed | IORD_32DIRECT(SEMAPHORE_BASE, 4);
+		// Ofsset 4 = data_out, id of semaphore on creation
+		alt_printf("fourth\n");
+		alt_printf("%x\n", j);
+	} while ((j & 0x1) != 1);
+
+	alt_printf("%x\n", resumed);
 
 	/* Event loop never exits. */
 	while (true);

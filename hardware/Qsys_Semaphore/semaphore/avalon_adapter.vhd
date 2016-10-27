@@ -9,7 +9,8 @@ entity avalon_adapter is
         -- input from avalon MM interface
         clock:        in std_logic;
         resetn:       in std_logic;
-        read, write:  in std_logic;
+        read:         in std_logic;
+        write:        in std_logic;
         chipselect:   in std_logic;
         address:      in std_logic_vector(1 downto 0);
         -- input from user
@@ -22,7 +23,8 @@ entity avalon_adapter is
         sem_address:  out std_logic_vector(COUNTER_WIDTH - 1 downto 0);
         sem_data_in:  out std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
         -- outputs to user
-        readdata:     out std_logic_vector(ADDRESS_WIDTH - 1 downto 0)
+        readdata:     out std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
+        Q_export:     out std_logic_vector(ADDRESS_WIDTH - 1 downto 0)
     );
 end avalon_adapter;
 
@@ -30,23 +32,26 @@ architecture Structure of avalon_adapter is
     signal reg_command: std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
     signal reg_address: std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
     signal reg_data_in: std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
+    --signal useless_holder: std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
     signal load:        std_logic;
-    -- signal out_command: std_logic_vector(3 downto 0);
-    -- signal out_address: std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
-    -- signal out_data_in: std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
 
 begin
-    --out_command <= reg_command(2 downto 0);
-    --out_address <= reg_address(COUNTER_WIDTH - 1 downto 0);
-    --out_data_in <= reg_data_in;
-    
+
+    --Q_export <= useless_holder;
+    Q_export(31 downto 29) <= (others => '0');
+    Q_export(28 downto 24) <= sem_status;
+    Q_export(23 downto 16) <= sem_data_out(7 downto 0);
+    Q_export(15 downto 12) <= reg_command(3 downto 0);
+    Q_export(11 downto 8) <= reg_address(3 downto 0);
+    Q_export(7 downto 0) <= reg_data_in(7 downto 0);
     -- input receiving
     process (clock, resetn)
     begin
         if resetn = '0' then
                 reg_command  <= (others => '0');
                 reg_data_in  <= (others => '0');
-                reg_address   <= (others => '0');
+                reg_address  <= (others => '0');
+                --useless_holder <= (others => '0');
                 load         <= '0';
         else 
             if (rising_edge(clock)) then
@@ -59,13 +64,15 @@ begin
                                 reg_address <= writedata;
                             when "10" =>
                                 reg_data_in <= writedata;
-										  load <= '1';
+                                load <= '1';
                             when others => null;
                         end case;
                     elsif (write = '0' and read = '1') then
                             case address is
                                 when "00" =>
-                                    readdata <= "000000000000000000000000000" & sem_status;
+                                    readdata(ADDRESS_WIDTH - 1 downto 5) <= (others => '0');
+                                    readdata(4 downto 0) <= sem_status;
+                                    
                                 when "01" =>
                                     readdata <= sem_data_out;
                                 when others => null;
