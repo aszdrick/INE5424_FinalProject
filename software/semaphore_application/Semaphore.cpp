@@ -5,62 +5,83 @@
  *      Author: aszdrick
  */
 
+#include "../HAL/inc/io.h"
 #include "Semaphore.h"
+#include "sys/alt_stdio.h"
 #include "system.h"
-#include "/opt/altera/13.0sp1/nios2eds/components/altera_nios2/HAL/inc/io.h"
+#include "Thread.h"
 
+const unsigned long long Semaphore::BASE_ADDRESS = SEMAPHORE_BASE;
 
-const unsigned long long Semaphore::BASE = SEMAPHORE_BASE;
+Semaphore::Semaphore(unsigned v) {
+	alt_printf("Semaphore::Semaphore(%d)\n", v);
 
-Semaphore::Semaphore(unsigned v = 1) {
-	//	sem_cmd = (unsigned int∗) 0x41300000;
-	//	sem_thr = (unsigned int∗) 0x41300004;
+	//	DISABLE CPU INTERRUPTIONS
+	IOWR_32DIRECT(BASE_ADDRESS, input::COMMAND, command::CREATE);
 
-	//	CPU::int_disable();
+	IOWR_32DIRECT(BASE_ADDRESS, input::DATA, v);
 
-	//	∗sem_cmd = (0x20000000 | v);
-	//	sem_id = (∗sem_thr & 0x000000FF);
+	int status = IORD_32DIRECT(BASE_ADDRESS, output::STATUS);
 
-	//	CPU::int_enable();
+	while (!(status & mask::DONE)) {
+		status = IORD_32DIRECT(BASE_ADDRESS, output::STATUS);
+	}
 
+	if (status & mask::ERROR) {
+		throw 666;
+	}
+
+	sem_id = IORD_32DIRECT(BASE_ADDRESS, output::DATA);
+	//	ENABLE CPU INTERRUPTIONS
 }
 
 Semaphore::~Semaphore() {
-	//	CPU::int_disable();
-	//
-	//	∗sem_cmd = (0x40000000 | (sem_id << 16));
-	//
-	//	CPU::int_enable();
+	alt_putstr("Semaphore::~Semaphore()\n");
+
+	//	LOCK CPU
+
+	IOWR_32DIRECT(BASE_ADDRESS, input::COMMAND, command::DESTROY);
+
+	IOWR_32DIRECT(BASE_ADDRESS, input::SEMAPHORE, sem_id);
+	// TODO: remove this shit
+	IOWR_32DIRECT(BASE_ADDRESS, input::DATA, 0);
+
+	//	ENABLE CPU INTERRUPTIONS
 }
 
 void Semaphore::p() {
-	// TSC::Time Stamp tmp = mytsc.time stamp();
-//	Thread∗ thr = Thread::self();
-//
-//	CPU::int_disable();
-//
-//	∗sem_thr = (unsigned int) thr;
-//	∗sem_cmd = (0x60000000 | (sem_id << 16));
-//	auto status = ∗sem_cmd;
-//
-//	CPU::int_enable();
-//
-//	// kout << (mytsc.time stamp() − tmp) << ”\n”;
-//
-//	if (status & STAT_ERROR) {
-//		Machine::panic();
-//	}
-//
-//	if (status & STAT_BLOCK) {
-//		// Block Current Thread
-//		thr−>suspend();
-//	}
+	alt_putstr("Semaphore::p()\n");
+
+	unsigned int thread = Thread::RUNNING;
+
+	//	DISABLE CPU INTERRUPTIONS
+
+	IOWR_32DIRECT(BASE_ADDRESS, input::COMMAND, command::DOWN);
+
+	IOWR_32DIRECT(BASE_ADDRESS, input::SEMAPHORE, sem_id);
+
+	IOWR_32DIRECT(BASE_ADDRESS, input::DATA, thread);
+
+	int status = IORD_32DIRECT(BASE_ADDRESS, output::STATUS);
+
+	while (!(status & mask::DONE)) {
+		status = IORD_32DIRECT(BASE_ADDRESS, output::STATUS);
+	}
+
+	//	ENABLE CPU INTERRUPTIONS
+
+	if (status & mask::ERROR) {
+		throw 666;
+	}
+
+	if (status & mask::BLOCK) {
+		// Block Current Thread
+	}
 }
 
 void Semaphore::v() {
-	// TSC::Time Stamp tmp = mytsc.time stamp();
-//	Thread∗ thr;
-//
+	alt_putstr("Semaphore::v()\n");
+
 //	CPU::int_disable();
 //
 //	∗sem_cmd = (0x80000000 | (sem_id << 16));

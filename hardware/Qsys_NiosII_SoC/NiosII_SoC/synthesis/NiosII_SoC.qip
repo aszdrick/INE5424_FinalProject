@@ -2,7 +2,7 @@ set_global_assignment -entity "NiosII_SoC" -library "NiosII_SoC" -name IP_TOOL_N
 set_global_assignment -entity "NiosII_SoC" -library "NiosII_SoC" -name IP_TOOL_VERSION "13.0sp1"
 set_global_assignment -entity "NiosII_SoC" -library "NiosII_SoC" -name IP_TOOL_ENV "Qsys"
 set_global_assignment -library "NiosII_SoC" -name SOPCINFO_FILE [file join $::quartus(qip_path) "../../NiosII_SoC.sopcinfo"]
-set_instance_assignment -entity "NiosII_SoC" -library "NiosII_SoC" -name SLD_INFO "QSYS_NAME NiosII_SoC HAS_SOPCINFO 1 GENERATION_ID 1477596960"
+set_instance_assignment -entity "NiosII_SoC" -library "NiosII_SoC" -name SLD_INFO "QSYS_NAME NiosII_SoC HAS_SOPCINFO 1 GENERATION_ID 1477683498"
 set_global_assignment -library "NiosII_SoC" -name MISC_FILE [file join $::quartus(qip_path) "../../NiosII_SoC.cmp"]
 set_global_assignment -name SYNTHESIS_ONLY_QIP ON
 set_global_assignment -library "NiosII_SoC" -name MISC_FILE [file join $::quartus(qip_path) "../../NiosII_SoC.qsys"]

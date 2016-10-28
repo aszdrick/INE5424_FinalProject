@@ -32,27 +32,24 @@ architecture Structure of avalon_adapter is
     signal reg_command: std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
     signal reg_address: std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
     signal reg_data_in: std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
-    --signal useless_holder: std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
-    signal load:        std_logic;
+    signal load: std_logic;
 
 begin
-
-    --Q_export <= useless_holder;
     Q_export(31 downto 29) <= (others => '0');
     Q_export(28 downto 24) <= sem_status;
     Q_export(23 downto 16) <= sem_data_out(7 downto 0);
     Q_export(15 downto 12) <= reg_command(3 downto 0);
     Q_export(11 downto 8) <= reg_address(3 downto 0);
     Q_export(7 downto 0) <= reg_data_in(7 downto 0);
+    
     -- input receiving
     process (clock, resetn)
     begin
         if resetn = '0' then
-                reg_command  <= (others => '0');
-                reg_data_in  <= (others => '0');
-                reg_address  <= (others => '0');
-                --useless_holder <= (others => '0');
-                load         <= '0';
+                reg_command <= (others => '0');
+                reg_data_in <= (others => '0');
+                reg_address <= (others => '0');
+                load <= '0';
         else 
             if (rising_edge(clock)) then
                 if (chipselect = '1') then
@@ -72,7 +69,6 @@ begin
                                 when "00" =>
                                     readdata(ADDRESS_WIDTH - 1 downto 5) <= (others => '0');
                                     readdata(4 downto 0) <= sem_status;
-                                    
                                 when "01" =>
                                     readdata <= sem_data_out;
                                 when others => null;

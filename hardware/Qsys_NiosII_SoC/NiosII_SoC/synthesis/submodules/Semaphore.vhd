@@ -28,6 +28,11 @@ entity semaphore is
 end semaphore;
 
 architecture Behavioral of semaphore is
+    -- Types
+    type t_memory is array(0 to C_MAX_SEMAPHORES - 1) of std_logic_vector(C_VALUE_WIDTH - 1 downto 0);
+    type t_fifo_data is array (0 to C_MAX_SEMAPHORES - 1) of std_logic_vector(C_FIFO_WIDTH - 1 downto 0);
+    type t_state is (idle, createCmd, destroyCmd, upCmd, downCmd, resumeThr);
+    
     -- Semaphore Commands
     constant C_CMD_CREATE:  std_logic_vector(2 downto 0) := "001";
     constant C_CMD_DESTROY: std_logic_vector(2 downto 0) := "010";
@@ -35,12 +40,10 @@ architecture Behavioral of semaphore is
     constant C_CMD_UP:      std_logic_vector(2 downto 0) := "100";
     
     -- State Machine Type
-    type t_state is (idle, createCmd, destroyCmd, upCmd, downCmd, resumeThr);
     signal s_state: t_state;
     
     -- Internal Memory
     signal s_bitmap: std_logic_vector(0 to C_MAX_SEMAPHORES - 1) := (others => '0');
-    type t_memory is array(0 to C_MAX_SEMAPHORES - 1) of std_logic_vector(C_VALUE_WIDTH - 1 downto 0);
     signal s_memory: t_memory;
     
     -- Internal Registers
@@ -64,7 +67,6 @@ architecture Behavioral of semaphore is
     signal s_fifo_enable: std_logic_vector(0 to C_MAX_SEMAPHORES - 1) := (others => '0');
     signal s_fifo_full:   std_logic_vector(0 to C_MAX_SEMAPHORES - 1) := (others => '0');
     signal s_fifo_empty:  std_logic_vector(0 to C_MAX_SEMAPHORES - 1) := (others => '0');
-    type t_fifo_data is array (0 to C_MAX_SEMAPHORES - 1) of std_logic_vector(C_FIFO_WIDTH - 1 downto 0);
     signal s_fifo_data_in:  t_fifo_data;
     signal s_fifo_data_out: t_fifo_data;
     
@@ -191,7 +193,7 @@ begin
                                 v_idx := conv_integer(s_addr);
                                 s_idx <= v_idx;
                                 ---- Forward POP FIFO if
-                                if (s_memory(v_idx)(0) = '1') then
+                                if (s_memory(v_idx)(C_VALUE_WIDTH - 1) = '1') then
                                     s_fifo_rd_wr(v_idx)  <= '1';
                                     s_fifo_enable(v_idx) <= '0';
                                 end if;
@@ -247,11 +249,6 @@ begin
 
                     when upCmd =>
                     if (s_bitmap(s_idx) = '1') then
-                        -- Forward POP FIFO if
-                        --if (s_memory(v_idx)(0) = '1') then
-                        --    s_fifo_rd_wr(v_idx)  <= '1';
-                        --    s_fifo_enable(v_idx) <= '0';
-                        --end if;
                         s_memory(s_idx) <= s_memory(s_idx) + 1;
                         if (s_memory(s_idx)(C_VALUE_WIDTH - 1) = '1') then
                             s_fifo_enable(s_idx) <= '1';

@@ -8,18 +8,44 @@
 #ifndef SEMAPHORE_H_
 #define SEMAPHORE_H_
 
-class Semaphore {
-	static const unsigned long long BASE;
- public:
-    enum STATUS {
-        STAT_BLOCK  = 0x10000000,
-        STAT_RESUME = 0x08000000,
-        STAT_FULL   = 0x04000000,
-        STAT_ERROR  = 0x02000000,
-        STAT_DONE   = 0x01000000,
-    };
+namespace input {
+	enum Input {
+		COMMAND = 0,
+		SEMAPHORE = 4,
+		DATA    = 8
+	};
+}
 
-    Semaphore(unsigned);
+namespace output {
+	enum Output {
+		STATUS = 0,
+		DATA = 4
+	};
+}
+
+namespace command {
+	enum Command {
+		CREATE = 0x1,
+		DESTROY = 0x2,
+		DOWN = 0X3,
+		UP = 0x4
+	};
+}
+
+namespace mask {
+	enum Mask {
+		DONE = 0x1,
+		ERROR = 0x2,
+		FULL = 0x4,
+		BLOCK = 0x8,
+		RESUME = 0x16,
+	};
+}
+
+class Semaphore {
+	static const unsigned long long BASE_ADDRESS;
+ public:
+    Semaphore(unsigned = 1);
     ~Semaphore();
 
 	void p();

@@ -145,6 +145,7 @@ ELF := semaphore_application.elf
 C_SRCS :=
 CXX_SRCS += Semaphore.cpp
 CXX_SRCS += main.cpp
+CXX_SRCS += Thread.cpp
 ASM_SRCS :=
 
 
