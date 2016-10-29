@@ -55,7 +55,7 @@ architecture Behavioral of semaphore is
     -- Internal Registers
     signal s_addr:     std_logic_vector(C_VALUE_WIDTH - 1 downto 0) := (others => '0');
     signal s_data_in:  std_logic_vector(C_FIFO_WIDTH - 1 downto 0) := (others => '0');
-    signal s_data_out: std_logic_vector(C_FIFO_WIDTH - 1 downto 0) := (others => '0');
+    --signal s_data_out: std_logic_vector(C_FIFO_WIDTH - 1 downto 0) := (others => '0');
     signal s_resume:   std_logic := '0';
     signal s_block:    std_logic := '0';
     signal s_full:     std_logic := '0';
@@ -110,165 +110,181 @@ begin
     -- Concurrent Statements
     s_addr <= p_addr;
     s_data_in <= p_data_in;
-    p_data_out <= s_data_out;
+    --p_data_out <= s_data_out;
     p_status <= s_resume & s_block & s_full & s_error & s_done;
 
     -- This process searchs for an free semaphore id.
-    search_free : process (p_clk)
-        variable v_or_vector: std_logic_vector(0 to C_MAX_SEMAPHORES - 1);
+    search_free : process (p_clk, p_rst)
+        --variable row : integer range C_MAX_SEMAPHORES - 1 downto 0 := 0;
+        --variable full : boolean;
+        variable v_or_vector : std_logic_vector(0 to C_MAX_SEMAPHORES - 1);
     begin
-            if p_clk' event and p_clk = '1' then
-                if p_rst = '0' then
-                    s_full <= '0';
-                else
-                    v_or_vector(0) := '0' or (not s_bitmap(0));
-                    for row in 1 to C_MAX_SEMAPHORES - 1 loop
-                        v_or_vector(row) := v_or_vector(row - 1) or (not s_bitmap(row));
-                    end loop;
-                    s_full <= not v_or_vector(C_MAX_SEMAPHORES - 1);
-                    for row in C_MAX_SEMAPHORES - 1 to 0 loop
-                        if (s_bitmap(row) = '0') then
-                            s_free <= row;
-                        end if;
-                    end loop;
+        if p_rst = '0' then
+            s_full <= '0';
+            --s_free <= 0;
+            --row := 0;
+            --full := false;
+        elsif rising_edge(p_clk) then
+            
+            v_or_vector(0) := '0' or (not s_bitmap(0));
+            
+            for row in 1 to C_MAX_SEMAPHORES - 1 loop
+                v_or_vector(row) := v_or_vector(row - 1) or (not s_bitmap(row));
+            end loop;
+            
+            s_full <= not v_or_vector(C_MAX_SEMAPHORES - 1);
+            
+            for row in C_MAX_SEMAPHORES - 1 downto 0 loop
+                if (s_bitmap(row) = '0') then
+                    s_free <= row;
                 end if;
-            end if;
+            end loop;
+            --row := 0;
+            --while (s_bitmap(row) = '1' and row < C_MAX_SEMAPHORES - 1) loop
+            --    s_free <= row;
+            --    row := row + 1;
+            --end loop;
+            --full := s_bitmap(row) = '1';
+            --if full then
+            --    s_full <= '1';
+            --else
+            --    s_full <= '0';
+            --end if;
+        end if;
     end process;
 
     -- Semaphore Process
-    mainProc: process (p_clk, p_cmd) is
+    mainProc: process (p_clk, p_rst, p_cmd) is
               variable v_idx: integer range C_MAX_SEMAPHORES - 1 downto 0 := 0;
     begin
-        if p_clk' event and p_clk = '1' then
-            -- Reset Handling
-            if p_rst = '0' then
-                s_bitmap <= (others => '0');
-                s_idx <= 0;
-                s_thread <= (others => '0');
-                s_data_out <= (others => '0');
-                s_fifo_rd_wr <= (others => '0');
-                s_fifo_enable <= (others => '1');
-                s_error <= '0';
-                s_done <= '0';
-                s_block <= '0';
-                s_resume <= '0';
-                s_state <= idle;
-            else
-                -- Finite State Machine Starts Here!
-                case s_state is
-                    when idle =>
-                        -- Always disable all fifos when idle ;
-                        s_fifo_enable <= (others => '1');
-                        case p_cmd is
-                            when C_CMD_CREATE =>
-                                s_data_out <= (others => '0');
-                                s_error <= '0';
-                                s_done <= '0';
-                                s_block <= '0';
-                                s_resume <= '0';
-                                if (s_full = '0') then
-                                    s_bitmap(s_free) <= '1';
-                                    s_idx <= s_free;
-                                    s_value <= conv_std_logic_vector(conv_integer(s_data_in), C_VALUE_WIDTH);
-                                    s_state <= createCmd;
-                                else
-                                    s_error <= '1';
-                                end if;
-                            
-                            when C_CMD_DESTROY =>
-                                s_data_out <= (others => '0');
-                                s_error <= '0';
-                                s_done <= '0';
-                                s_block <= '0';
-                                s_resume <= '0';
-                                s_idx <= conv_integer(s_addr);
-                                s_state <= destroyCmd;
-                            
-                            when C_CMD_UP =>
-                                s_data_out <= (others => '0');
-                                s_error <= '0';
-                                s_done <= '0';
-                                s_block <= '0';
-                                s_resume <= '0';
-                                v_idx := conv_integer(s_addr);
-                                s_idx <= v_idx;
-                                ---- Forward POP FIFO if
-                                if (s_memory(v_idx)(C_VALUE_WIDTH - 1) = '1') then
-                                    s_fifo_rd_wr(v_idx)  <= '1';
-                                    s_fifo_enable(v_idx) <= '0';
-                                end if;
-                                s_state <= upCmd;
-
-                            when C_CMD_DOWN =>
-                                s_data_out <= (others => '0');
-                                s_error <= '0';
-                                s_done <= '0';
-                                s_block <= '0';
-                                s_resume <= '0';
-                                s_idx <= conv_integer(s_addr);
-                                s_thread <= s_data_in;
-                                s_state <= downCmd;
-                            
-                            when others =>
-                                null;
-                        end case;
-
-                    when createCmd =>
-                        s_memory(s_idx) <= s_value;
-                        s_data_out <= conv_std_logic_vector(s_idx, C_FIFO_WIDTH);
-                        s_done <= '1';
-                        s_state <= idle;
-
-                    when destroyCmd =>
-                        if (s_fifo_empty(s_idx) = '1') then
-                            s_bitmap(s_idx) <= '0';
-                            s_done <= '1';
-                        else
-                            s_error <= '1';
-                        end if;
-                        s_state <= idle;
-
-                    when downCmd =>
-                        if (s_bitmap(s_idx) = '1') then
-                            s_memory(s_idx) <= s_memory(s_idx) - 1;
-                            if (SIGNED(s_memory(s_idx)) < 1) then
-                                if (s_fifo_full(s_idx) = '0') then
-                                    s_block <= '1';
-                                    s_fifo_enable(s_idx) <= '0';
-                                    s_fifo_rd_wr(s_idx) <= '0';
-                                    s_fifo_data_in(s_idx) <= s_thread;
-                                else
-                                    s_error <= '1';
-                                end if;
+        -- Reset Handling
+        if p_rst = '0' then
+            s_bitmap <= (others => '0');
+            s_idx <= 0;
+            s_thread <= (others => '0');
+            p_data_out <= (others => '0');
+            s_fifo_rd_wr <= (others => '0');
+            s_fifo_enable <= (others => '1');
+            s_error <= '0';
+            s_done <= '0';
+            s_block <= '0';
+            s_resume <= '0';
+            s_state <= idle;
+        elsif rising_edge(p_clk) then
+            -- Finite State Machine Starts Here!
+            case s_state is
+                when idle =>
+                    -- Always disable all fifos when idle ;
+                    s_fifo_enable <= (others => '1');
+                    case p_cmd is
+                        when C_CMD_CREATE =>
+                            p_data_out <= (others => '0');
+                            s_error <= '0';
+                            s_done <= '0';
+                            s_block <= '0';
+                            s_resume <= '0';
+                            if (s_full = '0') then
+                                s_bitmap(s_free) <= '1';
+                                s_idx <= s_free;
+                                s_value <= conv_std_logic_vector(conv_integer(s_data_in), C_VALUE_WIDTH);
+                                s_state <= createCmd;
+                            else
+                                s_error <= '1';
                             end if;
-                            s_done <= '1';
-                        else
-                            s_error <= '1';
-                        end if;
-                        s_state <= idle;
+                        
+                        when C_CMD_DESTROY =>
+                            p_data_out <= (others => '0');
+                            s_error <= '0';
+                            s_done <= '0';
+                            s_block <= '0';
+                            s_resume <= '0';
+                            s_idx <= conv_integer(s_addr);
+                            s_state <= destroyCmd;
+                        
+                        when C_CMD_UP =>
+                            p_data_out <= (others => '0');
+                            s_error <= '0';
+                            s_done <= '0';
+                            s_block <= '0';
+                            s_resume <= '0';
+                            v_idx := conv_integer(s_addr);
+                            s_idx <= v_idx;
+                            ---- Forward POP FIFO if
+                            if (s_memory(v_idx)(C_VALUE_WIDTH - 1) = '1') then
+                                s_fifo_rd_wr(v_idx)  <= '1';
+                                s_fifo_enable(v_idx) <= '0';
+                            end if;
+                            s_state <= upCmd;
 
-                    when upCmd =>
-                    if (s_bitmap(s_idx) = '1') then
-                        s_memory(s_idx) <= s_memory(s_idx) + 1;
-                        if (s_memory(s_idx)(C_VALUE_WIDTH - 1) = '1') then
-                            s_fifo_enable(s_idx) <= '1';
-                            s_state <= resumeThr;
-                        else
-                            s_done <= '1';
-                            s_state <= idle;
-                        end if;
+                        when C_CMD_DOWN =>
+                            p_data_out <= (others => '0');
+                            s_error <= '0';
+                            s_done <= '0';
+                            s_block <= '0';
+                            s_resume <= '0';
+                            s_idx <= conv_integer(s_addr);
+                            s_thread <= s_data_in;
+                            s_state <= downCmd;
+                        
+                        when others =>
+                            null;
+                    end case;
+
+                when createCmd =>
+                    s_memory(s_idx) <= s_value;
+                    p_data_out <= conv_std_logic_vector(s_idx, C_FIFO_WIDTH);
+                    s_done <= '1';
+                    s_state <= idle;
+
+                when destroyCmd =>
+                    if (s_fifo_empty(s_idx) = '1') then
+                        s_bitmap(s_idx) <= '0';
+                        s_done <= '1';
                     else
                         s_error <= '1';
+                    end if;
+                    s_state <= idle;
+
+                when downCmd =>
+                    if (s_bitmap(s_idx) = '1') then
+                        s_memory(s_idx) <= s_memory(s_idx) - 1;
+                        if (SIGNED(s_memory(s_idx)) < 1) then
+                            s_block <= '1';
+                            if (s_fifo_full(s_idx) = '0') then
+                                s_fifo_enable(s_idx) <= '0';
+                                s_fifo_rd_wr(s_idx) <= '0';
+                                s_fifo_data_in(s_idx) <= s_thread;
+                            else
+                                s_error <= '1';
+                            end if;
+                        end if;
+                        s_done <= '1';
+                    else
+                        s_error <= '1';
+                    end if;
+                    s_state <= idle;
+
+                when upCmd =>
+                if (s_bitmap(s_idx) = '1') then
+                    s_memory(s_idx) <= s_memory(s_idx) + 1;
+                    if (s_memory(s_idx)(C_VALUE_WIDTH - 1) = '1') then
+                        s_fifo_enable(s_idx) <= '1';
+                        s_state <= resumeThr;
+                    else
+                        s_done <= '1';
                         s_state <= idle;
                     end if;
-                    
-                    when resumeThr =>
-                        s_resume <= '1';
-                        s_done <= '1';
-                        s_data_out <= s_fifo_data_out(s_idx);
-                        s_state <= idle;
-                end case;
-            end if;
+                else
+                    s_error <= '1';
+                    s_state <= idle;
+                end if;
+                
+                when resumeThr =>
+                    s_resume <= '1';
+                    s_done <= '1';
+                    p_data_out <= s_fifo_data_out(s_idx);
+                    s_state <= idle;
+            end case;
         end if;
     end process;
 end Behavioral;

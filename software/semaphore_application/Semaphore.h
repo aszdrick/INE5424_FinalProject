@@ -2,7 +2,7 @@
  * Semaphore.h
  *
  *  Created on: Oct 25, 2016
- *      Author: aszdrick
+ *      Authors: marcio Monteiro and Marleson Graf
  */
 
 #ifndef SEMAPHORE_H_
@@ -12,7 +12,7 @@ namespace input {
 	enum Input {
 		COMMAND = 0,
 		SEMAPHORE = 4,
-		DATA    = 8
+		DATA = 8
 	};
 }
 
@@ -52,9 +52,7 @@ class Semaphore {
 	void v();
 
  private:
-	unsigned int sem_id;
-	volatile unsigned int* sem_cmd;
-	volatile unsigned int* sem_thr;
+	unsigned int id;
 };
 
 #endif /* SEMAPHORE_H_ */

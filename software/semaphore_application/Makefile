@@ -144,8 +144,9 @@ ELF := semaphore_application.elf
 # Paths to C, C++, and assembly source files.
 C_SRCS :=
 CXX_SRCS += Semaphore.cpp
-CXX_SRCS += main.cpp
 CXX_SRCS += Thread.cpp
+CXX_SRCS += main.cpp
+CXX_SRCS += CPU.cpp
 ASM_SRCS :=
 
 

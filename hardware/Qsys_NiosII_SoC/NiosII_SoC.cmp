@@ -1,8 +1,9 @@
 	component NiosII_SoC is
 		port (
-			clk_clk                  : in  std_logic                     := 'X'; -- clk
-			reset_reset_n            : in  std_logic                     := 'X'; -- reset_n
-			semaphore_conduit_export : out std_logic_vector(31 downto 0)         -- export
+			clk_clk                          : in  std_logic                     := 'X'; -- clk
+			reset_reset_n                    : in  std_logic                     := 'X'; -- reset_n
+			semaphore_led_conduit_export     : out std_logic_vector(9 downto 0);         -- export
+			semaphore_display_conduit_export : out std_logic_vector(31 downto 0)         -- export
 		);
 	end component NiosII_SoC;
 

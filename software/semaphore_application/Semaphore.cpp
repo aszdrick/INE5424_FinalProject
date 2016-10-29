@@ -2,10 +2,12 @@
  * Semaphore.cpp
  *
  *  Created on: Oct 25, 2016
- *      Author: aszdrick
+ *      Authors: marcio Monteiro and Marleson Graf
  */
 
-#include "../HAL/inc/io.h"
+#include "HAL/inc/io.h"
+
+#include "CPU.h"
 #include "Semaphore.h"
 #include "sys/alt_stdio.h"
 #include "system.h"
@@ -14,89 +16,117 @@
 const unsigned long long Semaphore::BASE_ADDRESS = SEMAPHORE_BASE;
 
 Semaphore::Semaphore(unsigned v) {
-	alt_printf("Semaphore::Semaphore(%d)\n", v);
+	alt_printf("Semaphore::Semaphore(%d) : ", v);
 
-	//	DISABLE CPU INTERRUPTIONS
+	CPU::int_disable();
+
 	IOWR_32DIRECT(BASE_ADDRESS, input::COMMAND, command::CREATE);
 
 	IOWR_32DIRECT(BASE_ADDRESS, input::DATA, v);
 
-	int status = IORD_32DIRECT(BASE_ADDRESS, output::STATUS);
-
-	while (!(status & mask::DONE)) {
+	int status = 0;
+	do {
 		status = IORD_32DIRECT(BASE_ADDRESS, output::STATUS);
-	}
+		if (status & mask::ERROR) {
+			alt_printf("\n\nERROR: maximum of semaphores reached!\n\n");
+			throw -1;
+		}
+	} while (!(status & mask::DONE));
 
-	if (status & mask::ERROR) {
-		throw 666;
-	}
+	id = IORD_32DIRECT(BASE_ADDRESS, output::DATA);
 
-	sem_id = IORD_32DIRECT(BASE_ADDRESS, output::DATA);
-	//	ENABLE CPU INTERRUPTIONS
+	CPU::int_enable();
+
+	alt_printf("Semaphore %x created.\n\n", id);
 }
 
 Semaphore::~Semaphore() {
-	alt_putstr("Semaphore::~Semaphore()\n");
+	alt_putstr("Semaphore::~Semaphore() : ");
 
-	//	LOCK CPU
+	CPU::int_disable();
 
 	IOWR_32DIRECT(BASE_ADDRESS, input::COMMAND, command::DESTROY);
 
-	IOWR_32DIRECT(BASE_ADDRESS, input::SEMAPHORE, sem_id);
+	IOWR_32DIRECT(BASE_ADDRESS, input::SEMAPHORE, id);
+
 	// TODO: remove this shit
 	IOWR_32DIRECT(BASE_ADDRESS, input::DATA, 0);
 
-	//	ENABLE CPU INTERRUPTIONS
+	int status = 0;
+	do {
+		status = IORD_32DIRECT(BASE_ADDRESS, output::STATUS);
+		if (status & mask::ERROR) {
+			alt_printf("\n\nERROR: destroying semaphore with threads blocked!\n\n");
+			throw -1;
+		}
+	} while (!(status & mask::DONE));
+
+	CPU::int_enable();
+
+	alt_printf("Semaphore %x destroyed.\n\n", id);
 }
 
 void Semaphore::p() {
-	alt_putstr("Semaphore::p()\n");
+	alt_printf("Calling p() in Semaphore %d...\n", id);
 
-	unsigned int thread = Thread::RUNNING;
+	Thread* thread = Thread::running();
 
-	//	DISABLE CPU INTERRUPTIONS
+	CPU::int_disable();
 
 	IOWR_32DIRECT(BASE_ADDRESS, input::COMMAND, command::DOWN);
 
-	IOWR_32DIRECT(BASE_ADDRESS, input::SEMAPHORE, sem_id);
+	IOWR_32DIRECT(BASE_ADDRESS, input::SEMAPHORE, id);
 
-	IOWR_32DIRECT(BASE_ADDRESS, input::DATA, thread);
+	IOWR_32DIRECT(BASE_ADDRESS, input::DATA, reinterpret_cast<int>(thread));
 
-	int status = IORD_32DIRECT(BASE_ADDRESS, output::STATUS);
-
-	while (!(status & mask::DONE)) {
+	int status = 0;
+	do {
 		status = IORD_32DIRECT(BASE_ADDRESS, output::STATUS);
-	}
+		if (status & mask::ERROR) {
+			if (status & mask::BLOCK) {
+				alt_printf("\n\nERROR: No more space available to store blocked thread!\n\n");
+			} else {
+				alt_printf("ERROR: Attempt to call p() in non-existent semaphore!\n\n");
+			}
+			throw -1;
+		}
+	} while (!(status & mask::DONE));
 
-	//	ENABLE CPU INTERRUPTIONS
-
-	if (status & mask::ERROR) {
-		throw 666;
-	}
+	CPU::int_enable();
 
 	if (status & mask::BLOCK) {
-		// Block Current Thread
+		alt_printf("\n\nBlocking thread %x...\n\n", thread);
 	}
 }
 
 void Semaphore::v() {
-	alt_putstr("Semaphore::v()\n");
+	alt_printf("Calling v() in Semaphore %d...\n", id);
 
-//	CPU::int_disable();
-//
-//	∗sem_cmd = (0x80000000 | (sem_id << 16));
-//	auto status = ∗sem_cmd;
-//	thr = (Thread∗)∗sem_thr;
-//
-//	CPU::int_enable();
-//
-//	// kout << (mytsc.time stamp() − tmp) << ”\n”;
-//
-//	if (status & STAT_ERROR) {
-//		Machine::panic();
-//	}
-//
-//	if (status & STAT_RESUME) {
-//		thr −>resume();
-//	}
+	CPU::int_disable();
+
+	IOWR_32DIRECT(BASE_ADDRESS, input::COMMAND, command::UP);
+
+	IOWR_32DIRECT(BASE_ADDRESS, input::SEMAPHORE, id);
+
+	IOWR_32DIRECT(BASE_ADDRESS, input::DATA, 0);
+
+	int status = 0;
+
+	do {
+		status = IORD_32DIRECT(BASE_ADDRESS, output::STATUS);
+		if (status & mask::ERROR) {
+			alt_printf("ERROR: Attempt to call v() in non-existent semaphore!\n\n");
+			throw -1;
+		}
+	} while (!(status & mask::DONE));
+
+	CPU::int_enable();
+
+	if (status & mask::RESUME) {
+		unsigned raw = IORD_32DIRECT(BASE_ADDRESS, output::DATA);
+		Thread* thread = reinterpret_cast<Thread*>(raw);
+		alt_printf("\nResuming thread %x...\n", thread);
+	}
+
+	alt_printf("\n");
 }

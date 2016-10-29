@@ -109,14 +109,20 @@
  <parameter name="projectName" value="" />
  <parameter name="sopcBorderPoints" value="false" />
  <parameter name="systemHash" value="1" />
- <parameter name="timeStamp" value="1477588131822" />
+ <parameter name="timeStamp" value="1477758290995" />
  <parameter name="useTestBenchNamingPattern" value="false" />
  <instanceScript></instanceScript>
  <interface name="clk" internal="clk.clk_in" type="clock" dir="end" />
  <interface name="reset" internal="clk.clk_in_reset" type="reset" dir="end" />
+ <interface name="semaphore_conduit" internal="semaphore.conduit" />
  <interface
-   name="semaphore_conduit"
-   internal="semaphore.conduit"
+   name="semaphore_led_conduit"
+   internal="semaphore.led_conduit"
+   type="conduit"
+   dir="end" />
+ <interface
+   name="semaphore_display_conduit"
+   internal="semaphore.display_conduit"
    type="conduit"
    dir="end" />
  <module kind="clock_source" version="13.0" enabled="1" name="clk">

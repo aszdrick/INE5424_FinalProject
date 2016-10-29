@@ -3,7 +3,7 @@
 # Machine generated for CPU 'nios2' in SOPC Builder design 'NiosII_SoC'
 # SOPC Builder design path: /home/aszdrick/ufsc/soII/INE5424_FinalProject/hardware/Qsys_NiosII_SoC/NiosII_SoC.sopcinfo
 #
-# Generated: Fri Oct 28 16:40:10 BRST 2016
+# Generated: Sat Oct 29 14:48:03 BRST 2016
 
 # DO NOT MODIFY THIS FILE
 #

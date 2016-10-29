@@ -24,7 +24,8 @@ entity avalon_adapter is
         sem_data_in:  out std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
         -- outputs to user
         readdata:     out std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
-        Q_export:     out std_logic_vector(ADDRESS_WIDTH - 1 downto 0)
+        Q_export:     out std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
+        Led_export: out std_logic_vector(COUNTER_WIDTH + 7 downto 0)
     );
 end avalon_adapter;
 
@@ -35,12 +36,11 @@ architecture Structure of avalon_adapter is
     signal load: std_logic;
 
 begin
-    Q_export(31 downto 29) <= (others => '0');
-    Q_export(28 downto 24) <= sem_status;
-    Q_export(23 downto 16) <= sem_data_out(7 downto 0);
-    Q_export(15 downto 12) <= reg_command(3 downto 0);
-    Q_export(11 downto 8) <= reg_address(3 downto 0);
-    Q_export(7 downto 0) <= reg_data_in(7 downto 0);
+    Led_export(4 downto 0) <= sem_status;
+    Led_export(7 downto 5) <= reg_command(2 downto 0);
+    Led_export(COUNTER_WIDTH + 7 downto 8) <= reg_address(COUNTER_WIDTH - 1 downto 0);
+    Q_export(31 downto 16) <= reg_data_in(15 downto 0);
+    Q_export(15 downto 0) <= sem_data_out(15 downto 0);
     
     -- input receiving
     process (clock, resetn)
@@ -65,6 +65,7 @@ begin
                             when others => null;
                         end case;
                     elsif (write = '0' and read = '1') then
+                        load <= '0';
                             case address is
                                 when "00" =>
                                     readdata(ADDRESS_WIDTH - 1 downto 5) <= (others => '0');
