@@ -103,7 +103,7 @@ ACDS_VERSION := 13.0sp1
 # BUILD_NUMBER: 232
 
 SETTINGS_FILE := settings.bsp
-SOPC_FILE := /home/aszdrick/ufsc/soII/INE5424_FinalProject/hardware/Qsys_NiosII_SoC/NiosII_SoC.sopcinfo
+SOPC_FILE := ../../hardware/Qsys_NiosII_SoC/NiosII_SoC.sopcinfo
 
 #-------------------------------------------------------------------------------
 #                             TOOL & COMMAND DEFINITIONS

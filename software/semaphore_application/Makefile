@@ -180,7 +180,7 @@ CRT0 :=
 SYS_LIB :=
 
 # Define path to the root of the BSP.
-BSP_ROOT_DIR := /home/aszdrick/ufsc/soII/INE5424_FinalProject/software/semaphore_application_bsp/
+BSP_ROOT_DIR := ../semaphore_application_bsp/
 
 # List of application specific include directories, library directories and library names
 APP_INCLUDE_DIRS :=
@@ -191,7 +191,7 @@ APP_LIBRARY_NAMES :=
 BUILD_PRE_PROCESS :=
 BUILD_POST_PROCESS :=
 
-QUARTUS_PROJECT_DIR := /home/aszdrick/ufsc/soII/INE5424_FinalProject/hardware/Qsys_NiosII_SoC/
+QUARTUS_PROJECT_DIR := ../../hardware/Qsys_NiosII_SoC/
 
 
 #END GENERATED
