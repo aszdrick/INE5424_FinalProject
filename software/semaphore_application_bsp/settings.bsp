@@ -2,8 +2,8 @@
 <sch:Settings xmlns:sch="http://www.altera.com/embeddedsw/bsp/schema">
         <BspType>hal</BspType>
         <BspVersion>default</BspVersion>
-        <BspGeneratedTimeStamp>Oct 29, 2016 6:39:51 PM</BspGeneratedTimeStamp>
-        <BspGeneratedUnixTimeStamp>1477773591865</BspGeneratedUnixTimeStamp>
+        <BspGeneratedTimeStamp>Oct 31, 2016 4:42:25 PM</BspGeneratedTimeStamp>
+        <BspGeneratedUnixTimeStamp>1477939345069</BspGeneratedUnixTimeStamp>
         <BspGeneratedLocation>/home/aszdrick/ufsc/soII/INE5424_FinalProject/software/semaphore_application_bsp</BspGeneratedLocation>
         <BspSettingsFile>settings.bsp</BspSettingsFile>
         <SopcDesignFile>/home/aszdrick/ufsc/soII/INE5424_FinalProject/hardware/Qsys_NiosII_SoC/NiosII_SoC.sopcinfo</SopcDesignFile>

@@ -13,6 +13,16 @@
 #include "system.h"
 #include "Thread.h"
 
+namespace {
+	unsigned read_status() {
+		unsigned status = IORD_32DIRECT(Semaphore::BASE_ADDRESS, output::STATUS);
+		while (!(status & (mask::DONE | mask::ERROR))) {
+			status = IORD_32DIRECT(Semaphore::BASE_ADDRESS, output::STATUS);
+		}
+		return status;
+	}
+}
+
 const unsigned long long Semaphore::BASE_ADDRESS = SEMAPHORE_BASE;
 
 Semaphore::Semaphore(unsigned v) {
@@ -24,14 +34,12 @@ Semaphore::Semaphore(unsigned v) {
 
 	IOWR_32DIRECT(BASE_ADDRESS, input::DATA, v);
 
-	int status = 0;
-	do {
-		status = IORD_32DIRECT(BASE_ADDRESS, output::STATUS);
-		if (status & mask::ERROR) {
-			alt_printf("\n\nERROR: maximum of semaphores reached!\n\n");
-			throw -1;
-		}
-	} while (!(status & mask::DONE));
+	int status = read_status();
+
+	if (status & mask::ERROR) {
+		alt_printf("\n\nERROR: maximum of semaphores reached!\n\n");
+		throw -1;
+	}
 
 	id = IORD_32DIRECT(BASE_ADDRESS, output::DATA);
 
@@ -52,14 +60,12 @@ Semaphore::~Semaphore() {
 	// TODO: remove this shit
 	IOWR_32DIRECT(BASE_ADDRESS, input::DATA, 0);
 
-	int status = 0;
-	do {
-		status = IORD_32DIRECT(BASE_ADDRESS, output::STATUS);
-		if (status & mask::ERROR) {
-			alt_printf("\n\nERROR: destroying semaphore with threads blocked!\n\n");
-			throw -1;
-		}
-	} while (!(status & mask::DONE));
+	int status = read_status();
+
+	if (status & mask::ERROR) {
+		alt_printf("\n\nERROR: destroying semaphore with threads blocked!\n\n");
+		throw -1;
+	}
 
 	CPU::int_enable();
 
@@ -79,23 +85,21 @@ void Semaphore::p() {
 
 	IOWR_32DIRECT(BASE_ADDRESS, input::DATA, reinterpret_cast<int>(thread));
 
-	int status = 0;
-	do {
-		status = IORD_32DIRECT(BASE_ADDRESS, output::STATUS);
-		if (status & mask::ERROR) {
-			if (status & mask::BLOCK) {
-				alt_printf("\n\nERROR: No more space available to store blocked thread!\n\n");
-			} else {
-				alt_printf("ERROR: Attempt to call p() in non-existent semaphore!\n\n");
-			}
-			throw -1;
+	int status = read_status();
+
+	if (status & mask::ERROR) {
+		if (status & mask::BLOCK) {
+			alt_printf("\n\nERROR: No more space available to store blocked thread!\n\n");
+		} else {
+			alt_printf("ERROR: Attempt to call p() in non-existent semaphore!\n\n");
 		}
-	} while (!(status & mask::DONE));
+		throw -1;
+	}
 
 	CPU::int_enable();
 
 	if (status & mask::BLOCK) {
-		alt_printf("\n\nBlocking thread %x...\n\n", thread);
+		alt_printf("\nBlocking thread %x...\n\n", thread);
 	}
 }
 
@@ -110,15 +114,12 @@ void Semaphore::v() {
 
 	IOWR_32DIRECT(BASE_ADDRESS, input::DATA, 0);
 
-	int status = 0;
+	int status = read_status();
 
-	do {
-		status = IORD_32DIRECT(BASE_ADDRESS, output::STATUS);
-		if (status & mask::ERROR) {
-			alt_printf("ERROR: Attempt to call v() in non-existent semaphore!\n\n");
-			throw -1;
-		}
-	} while (!(status & mask::DONE));
+	if (status & mask::ERROR) {
+		alt_printf("ERROR: Attempt to call v() in non-existent semaphore!\n\n");
+		throw -1;
+	}
 
 	CPU::int_enable();
 

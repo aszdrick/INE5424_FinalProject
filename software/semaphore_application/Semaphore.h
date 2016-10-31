@@ -43,8 +43,9 @@ namespace mask {
 }
 
 class Semaphore {
-	static const unsigned long long BASE_ADDRESS;
  public:
+	static const unsigned long long BASE_ADDRESS;
+
     Semaphore(unsigned = 1);
     ~Semaphore();
 
