@@ -46,6 +46,7 @@ begin
     
     -- input receiving
     process (clock, resetn)
+        variable needed : boolean := false;
     begin
         if resetn = '0' then
                 reg_command <= (others => '0');
@@ -54,6 +55,7 @@ begin
                 data_needed <= '0';
                 addr_received <= '0';
                 data_received <= '0';
+                needed := false;
         else 
             if (rising_edge(clock)) then
                 if (chipselect = '1') then
@@ -61,7 +63,8 @@ begin
                         case address is
                             when "00" =>
                                 reg_command <= writedata;
-                                if ((writedata(0) xor writedata(1)) = '1') then
+                                needed := (writedata(0) xor writedata(1)) = '1';
+                                if (needed) then
                                     data_needed <= '1';
                                 else
                                     data_needed <= '0';

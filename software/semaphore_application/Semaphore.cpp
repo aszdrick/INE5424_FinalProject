@@ -13,16 +13,6 @@
 #include "system.h"
 #include "Thread.h"
 
-namespace {
-	unsigned read_status() {
-		unsigned status = IORD_32DIRECT(Semaphore::BASE_ADDRESS, output::STATUS);
-		while (!(status & (mask::DONE | mask::ERROR))) {
-			status = IORD_32DIRECT(Semaphore::BASE_ADDRESS, output::STATUS);
-		}
-		return status;
-	}
-}
-
 const unsigned long long Semaphore::BASE_ADDRESS = SEMAPHORE_BASE;
 
 Semaphore::Semaphore(unsigned v) {
@@ -31,7 +21,6 @@ Semaphore::Semaphore(unsigned v) {
 	CPU::int_disable();
 
 	IOWR_32DIRECT(BASE_ADDRESS, input::COMMAND, command::CREATE);
-
 	IOWR_32DIRECT(BASE_ADDRESS, input::DATA, v);
 
 	int status = read_status();
@@ -53,12 +42,7 @@ Semaphore::~Semaphore() {
 
 	CPU::int_disable();
 
-	IOWR_32DIRECT(BASE_ADDRESS, input::COMMAND, command::DESTROY);
-
-	IOWR_32DIRECT(BASE_ADDRESS, input::SEMAPHORE, id);
-
-	// TODO: remove this shit
-	IOWR_32DIRECT(BASE_ADDRESS, input::DATA, 0);
+	execute_command(command::DESTROY);
 
 	int status = read_status();
 
@@ -79,11 +63,7 @@ void Semaphore::p() {
 
 	CPU::int_disable();
 
-	IOWR_32DIRECT(BASE_ADDRESS, input::COMMAND, command::DOWN);
-
-	IOWR_32DIRECT(BASE_ADDRESS, input::SEMAPHORE, id);
-
-	IOWR_32DIRECT(BASE_ADDRESS, input::DATA, reinterpret_cast<int>(thread));
+	execute_command(command::DOWN, reinterpret_cast<int>(thread));
 
 	int status = read_status();
 
@@ -108,11 +88,7 @@ void Semaphore::v() {
 
 	CPU::int_disable();
 
-	IOWR_32DIRECT(BASE_ADDRESS, input::COMMAND, command::UP);
-
-	IOWR_32DIRECT(BASE_ADDRESS, input::SEMAPHORE, id);
-
-	IOWR_32DIRECT(BASE_ADDRESS, input::DATA, 0);
+	execute_command(command::UP);
 
 	int status = read_status();
 
@@ -124,10 +100,29 @@ void Semaphore::v() {
 	CPU::int_enable();
 
 	if (status & mask::RESUME) {
-		unsigned raw = IORD_32DIRECT(BASE_ADDRESS, output::DATA);
-		Thread* thread = reinterpret_cast<Thread*>(raw);
+		Thread* thread = reinterpret_cast<Thread*>(read_data());
 		alt_printf("\nResuming thread %x...\n", thread);
 	}
 
 	alt_printf("\n");
+}
+
+void Semaphore::execute_command(unsigned command, unsigned data) {
+	IOWR_32DIRECT(BASE_ADDRESS, input::COMMAND, command);
+
+	IOWR_32DIRECT(BASE_ADDRESS, input::SEMAPHORE, id);
+
+	IOWR_32DIRECT(BASE_ADDRESS, input::DATA, data);
+}
+
+unsigned Semaphore::read_data() {
+	return IORD_32DIRECT(Semaphore::BASE_ADDRESS, output::DATA);
+}
+
+unsigned Semaphore::read_status() {
+	unsigned status = IORD_32DIRECT(Semaphore::BASE_ADDRESS, output::STATUS);
+	while (!(status & (mask::DONE | mask::ERROR))) {
+		status = IORD_32DIRECT(Semaphore::BASE_ADDRESS, output::STATUS);
+	}
+	return status;
 }
