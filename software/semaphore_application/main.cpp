@@ -2,14 +2,14 @@
  * main.cpp
  *
  *  Created on: Oct 22, 2016
- *      Authors: marcio Monteiro and Marleson Graf
+ *      Authors: Marcio Monteiro and Marleson Graf
  */
 
 #include "Semaphore.h"
 #include "Thread.h"
 
 int main() {
-	Thread t1, t2, t3, t4, t5;
+	Thread t1(1), t2(2), t3(3), t4(4), t5(5);
 	// Semaphores s1 and s2 are initialized with 2
 	Semaphore s1(2), s2(2);
 

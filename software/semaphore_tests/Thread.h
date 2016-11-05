@@ -25,15 +25,15 @@ class Thread {
 };
 
 inline Thread::Thread(unsigned id) : id(id) {
-	alt_printf("Thread::Thread() : creating thread %x\n\n", id);
+	// alt_printf("Thread::Thread() : creating thread %x\n\n", id);
 	if (!RUNNING) {
 		RUNNING = this;
-		alt_printf("Thread %x is running.\n\n", id);
+		// alt_printf("Thread %x is running.\n\n", id);
 	}
 }
 
 inline Thread::~Thread() {
-	alt_printf("Thread::~Thread() : Thread %x destroyed.\n\n", id);
+	// alt_printf("Thread::~Thread() : Thread %x destroyed.\n\n", id);
 }
 
 inline unsigned Thread::identifier() {
@@ -45,11 +45,11 @@ inline Thread* Thread::running() {
 };
 
 inline Thread* Thread::switch_threads(Thread* thread) {
-	alt_printf("Switching threads...\n", thread);
+	// alt_printf("Switching threads...\n", thread);
 	Thread* old = RUNNING;
-	alt_printf("Previous thread running: %x\n", old->identifier());
+	// alt_printf("Previous thread running: %x\n", old->identifier());
 	RUNNING = thread;
-	alt_printf("New thread running: %x\n\n", RUNNING->identifier());
+	// alt_printf("New thread running: %x\n\n", RUNNING->identifier());
 	return old;
 }
 

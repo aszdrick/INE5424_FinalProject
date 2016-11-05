@@ -16,7 +16,7 @@
 const unsigned long long Semaphore::BASE_ADDRESS = SEMAPHORE_BASE;
 
 Semaphore::Semaphore(unsigned v) {
-	alt_printf("Semaphore::Semaphore(%d) : ", v);
+	// alt_printf("Semaphore::Semaphore(%d) : ", v);
 
 	CPU::int_disable();
 
@@ -26,7 +26,7 @@ Semaphore::Semaphore(unsigned v) {
 	int status = read_status();
 
 	if (status & mask::ERROR) {
-		alt_printf("\n\nERROR: maximum of semaphores reached!\n\n");
+		// alt_printf("\n\nERROR: maximum of semaphores reached!\n\n");
 		throw -1;
 	}
 
@@ -34,11 +34,11 @@ Semaphore::Semaphore(unsigned v) {
 
 	CPU::int_enable();
 
-	alt_printf("Semaphore %x created.\n\n", id);
+	// alt_printf("Semaphore %x created.\n\n", id);
 }
 
 Semaphore::~Semaphore() {
-	alt_putstr("Semaphore::~Semaphore() : ");
+	// alt_putstr("Semaphore::~Semaphore() : ");
 
 	CPU::int_disable();
 
@@ -47,17 +47,17 @@ Semaphore::~Semaphore() {
 	int status = read_status();
 
 	if (status & mask::ERROR) {
-		alt_printf("\n\nERROR: destroying semaphore with threads blocked!\n\n");
+		// alt_printf("\n\nERROR: destroying semaphore with threads blocked!\n\n");
 		throw -2;
 	}
 
 	CPU::int_enable();
 
-	alt_printf("Semaphore %x destroyed.\n\n", id);
+	 // alt_printf("Semaphore %x destroyed.\n\n", id);
 }
 
 void Semaphore::p() {
-	alt_printf("Calling p() in Semaphore %d...\n", id);
+	// alt_printf("Calling p() in Semaphore %d...\n", id);
 
 	Thread* thread = Thread::running();
 
@@ -69,10 +69,10 @@ void Semaphore::p() {
 
 	if (status & mask::ERROR) {
 		if (status & mask::BLOCK) {
-			alt_printf("\n\nERROR: No more space available to store blocked thread!\n\n");
+			// alt_printf("\n\nERROR: No more space available to store blocked thread!\n\n");
 			throw -3;
 		} else {
-			alt_printf("ERROR: Attempt to call p() in non-existent semaphore!\n\n");
+			// alt_printf("ERROR: Attempt to call p() in non-existent semaphore!\n\n");
 			throw -4;
 		}
 	}
@@ -80,13 +80,13 @@ void Semaphore::p() {
 	CPU::int_enable();
 
 	if (status & mask::BLOCK) {
-		alt_printf("\nBlocking thread %x...\n\n", thread->identifier());
+		// alt_printf("\nBlocking thread %x...\n\n", thread->identifier());
 		Thread::switch_threads(0);
 	}
 }
 
 void Semaphore::v() {
-	alt_printf("Calling v() in Semaphore %d...\n", id);
+	// alt_printf("Calling v() in Semaphore %d...\n", id);
 
 	CPU::int_disable();
 
@@ -95,7 +95,7 @@ void Semaphore::v() {
 	int status = read_status();
 
 	if (status & mask::ERROR) {
-		alt_printf("ERROR: Attempt to call v() in non-existent semaphore!\n\n");
+		// alt_printf("ERROR: Attempt to call v() in non-existent semaphore!\n\n");
 		throw -4;
 	}
 
@@ -103,10 +103,10 @@ void Semaphore::v() {
 
 	if (status & mask::RESUME) {
 		Thread* thread = reinterpret_cast<Thread*>(read_data());
-		alt_printf("\nResuming thread %x...\n", thread->identifier());
+		// alt_printf("\nResuming thread %x...\n", thread->identifier());
 	}
 
-	alt_printf("\n");
+	// alt_printf("\n");
 }
 
 void Semaphore::execute_command(unsigned command, unsigned data) {
