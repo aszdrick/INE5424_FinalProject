@@ -14,7 +14,7 @@ O componente Qsys para o Semaphore se encontra no diretório hardware/Qsys_Semap
 
 ### O SoC
 
-O SoC utilizado encontra-se no diretório hardware/Qsys_NiosII_SoC. Caso seja necessário gerar novamente o sistema, primeiro adicione o semáforo à lista de IP Cores (descrito acima). Feito isto, abra o projeto no Qsys (hardware/Qsys_NiosII_SoC/NiosII_SoC.qsys). Vá na aba Generation e clique em generate. Alguns warnings serão gerados, mas podem ser ignorados com segurança.
+O SoC utilizado encontra-se no diretório hardware/Qsys_NiosII_SoC. Caso seja necessário gerar novamente o sistema, primeiro adicione o semáforo à lista de IP Cores (descrito acima). Feito isto, abra o projeto no Qsys (hardware/Qsys_NiosII_SoC/NiosII_SoC.qsys). Vá na aba Generation e clique em generate. Os warnings podem ser ignorados com segurança.
 
 ### Execução
 
