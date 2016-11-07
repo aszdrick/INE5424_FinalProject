@@ -30,7 +30,7 @@ namespace command {
     };
 }
 
-// Enumarestes the masks used to take a specific status bit from semaphore.
+// Enumerates the masks used to take a specific status bit from semaphore.
 namespace mask {
     enum Mask {
         DONE = 0x1,

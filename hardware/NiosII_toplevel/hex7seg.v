@@ -1,14 +1,10 @@
+/* taken from http://www.johnloomis.org/digitallab/diglab/diglab1/diglab1.html */
+
 module hex7seg (hex, display);
 	input [3:0] hex;
 	output [0:6] display;
 	reg [0:6] display;
-/*
-* – 0 –
-* 5 | | 1
-* – 6 –
-* 4 | | 2
-* – 3 –
-*/
+
 	always @ (hex)
 	case (hex)
 		4'h0: display = 7'b0000001;

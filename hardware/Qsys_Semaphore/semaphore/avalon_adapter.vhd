@@ -24,6 +24,7 @@ entity avalon_adapter is
         sem_data_in:  out std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
         -- outputs to user
         readdata:     out std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
+        -- debug outputs
         Q_export:     out std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
         Led_export: out std_logic_vector(COUNTER_WIDTH + 7 downto 0)
     );
@@ -33,23 +34,23 @@ architecture Structure of avalon_adapter is
     signal reg_command: std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
     signal reg_address: std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
     signal reg_data_in: std_logic_vector(ADDRESS_WIDTH - 1 downto 0);
-    signal load: std_logic;
+    signal data_received: std_logic;
 
 begin
+    -- debug outputs
     Led_export(4 downto 0) <= sem_status;
     Led_export(7 downto 5) <= reg_command(2 downto 0);
     Led_export(COUNTER_WIDTH + 7 downto 8) <= reg_address(COUNTER_WIDTH - 1 downto 0);
     Q_export(31 downto 16) <= reg_data_in(15 downto 0);
     Q_export(15 downto 0) <= sem_data_out(15 downto 0);
-    
-    -- input receiving
+
     process (clock, resetn)
     begin
         if resetn = '0' then
                 reg_command <= (others => '0');
                 reg_data_in <= (others => '0');
                 reg_address <= (others => '0');
-                load <= '0';
+                data_received <= '0';
         else 
             if (rising_edge(clock)) then
                 if (chipselect = '1') then
@@ -61,11 +62,11 @@ begin
                                 reg_address <= writedata;
                             when "10" =>
                                 reg_data_in <= writedata;
-                                load <= '1';
+                                data_received <= '1';
                             when others => null;
                         end case;
                     elsif (write = '0' and read = '1') then
-                        load <= '0';
+                        data_received <= '0';
                             case address is
                                 when "00" =>
                                     readdata(ADDRESS_WIDTH - 1 downto 5) <= (others => '0');
@@ -75,20 +76,19 @@ begin
                                 when others => null;
                             end case;
                     else    
-                        load <= '0';
+                        data_received <= '0';
                     end if;
                 else    
-                    load <= '0';
+                    data_received <= '0';
                 end if;
             end if;
         end if;
     end process;
-    
-    -- Input processing
+
     process (clock)
     begin
         if (rising_edge(clock)) then
-            if (load = '1') then
+            if (data_received = '1') then
                 sem_command <= reg_command(2 downto 0);
                 sem_address <= reg_address(COUNTER_WIDTH - 1 downto 0);
                 sem_data_in <= reg_data_in;
