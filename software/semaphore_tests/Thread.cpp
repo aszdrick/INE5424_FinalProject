@@ -1,9 +1,4 @@
-/*
- * Thread.cpp
- *
- *  Created on: Oct 27, 2016
- *      Authors: Marcio Monteiro and Marleson Graf
- */
+// Copyright (C) 2016 Marcio Monteiro, Marleson Graf
 
 #include "Thread.h"
 

@@ -1,9 +1,4 @@
-/*
- * Semaphore.cpp
- *
- *  Created on: Oct 31, 2016
- *      Authors: Marcio Monteiro and Marleson Graf
- */
+// Copyright (C) 2016 Marcio Monteiro, Marleson Graf
 
 #include "Semaphore.h"
 #include "sys/alt_stdio.h"
@@ -12,6 +7,7 @@
 
 void tests::creation_destruction() {
     bool passed = true;
+
     try {
         Semaphore* tester = new Semaphore();
         delete tester;
@@ -28,14 +24,11 @@ void tests::creation_destruction() {
 
 void tests::max_semaphores() {
     bool passed = false;
-    // Create maximum number of semaphores
     Semaphore s1, s2, s3, s4, s5, s6, s7, s8;
-    
-    // Try to create another one, shall give an error
+
     try {
         Semaphore s9;
     } catch (int error) {
-        // If error is -1 then error was correctly detected
         passed = (error == -1);
     }
 
@@ -46,58 +39,60 @@ void tests::max_semaphores() {
     }
 }
 
-void tests::destroy_non_empty_semaphore() {
-    // Create new semaphore with size 0
-	Semaphore* tester = new Semaphore(0);
-	bool passed = false;
-    // Call p() to block a thread in semaphore's FIFO
-	tester->p();
-    // Try to delete it, a error shall be rised
-	try {
-		delete tester;
-	} catch (int error) {
-        // If error code is -2, everything is right
-		passed = (error == -2);
-	}
-    // Resume blocked thread so semaphore can be destroyed
-	tester->v();
-    // Finally, destroy semaphore without errors
-	delete tester;
-
-    if (passed) {
-        alt_putstr("[PASSED] DESTROY NON-EMPTY SEMAPHORE\n");
-    } else {
-        alt_putstr("[FAILED] DESTROY NON-EMPTY SEMAPHORE\n");
-    }
-}
-
 void tests::p_decrement() {
-    // Create a thread 
+    // Implicit switch of running
     Thread thread;
-    Thread::switch_threads(&thread);
+    
     Semaphore tester(1);
+    
     tester.p();
     tester.p();
+    
     if (Thread::running() == 0) {
         alt_putstr("[PASSED] TEST P DECREMENT\n");
     } else {
         alt_putstr("[FAILED] TEST P DECREMENT\n");
     }
 
-    // Avoid error of destructing a non-empty Semaphore
     tester.v();
 }
 
 void tests::v_increment() {
+    // Implicit switch of running
     Thread thread;
-    Thread::switch_threads(&thread);
+
     Semaphore tester(0);
+
     tester.v();
     tester.p();
+
     if (Thread::running() != 0) {
         alt_putstr("[PASSED] TEST V INCREMENT\n");
     } else {
         alt_putstr("[FAILED] TEST V INCREMENT\n");
+    }
+}
+
+void tests::destroy_non_empty_semaphore() {
+	Semaphore* tester = new Semaphore(0);
+	bool passed = false;
+
+	tester->p();
+
+	try {
+		delete tester;
+	} catch (int error) {
+		passed = (error == -2);
+	}
+
+	tester->v();
+
+	delete tester;
+
+    if (passed) {
+        alt_putstr("[PASSED] DESTROY NON-EMPTY SEMAPHORE\n");
+    } else {
+        alt_putstr("[FAILED] DESTROY NON-EMPTY SEMAPHORE\n");
     }
 }
 
@@ -128,7 +123,6 @@ void tests::size_init() {
         Thread::switch_threads(&t7);
         tester.p();
     } catch (...) {
-        alt_putstr("fuck\n");
         passed = false;
     }
     
@@ -148,6 +142,7 @@ void tests::size_init() {
 void tests::overflow_size_init() {
     bool passed = true;
     Semaphore tester(1023);
+    // Implicit switch of running
     Thread thread;
         
     tester.p();
@@ -163,8 +158,9 @@ void tests::overflow_size_init() {
 
 void tests::negative_init() {
     Semaphore tester(-1);
+    // Implicit switch of running
     Thread thread;
-        
+
     tester.v();
     tester.v();
 

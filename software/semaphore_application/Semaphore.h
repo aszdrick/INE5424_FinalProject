@@ -1,76 +1,89 @@
-/*
- * Semaphore.h
- *
- *  Created on: Oct 25, 2016
- *      Authors: Marcio Monteiro and Marleson Graf
- */
+// Copyright (C) 2016 Marcio Monteiro, Marleson Graf
 
 #ifndef SEMAPHORE_H_
 #define SEMAPHORE_H_
 
-/// Input enumeration
-// Enumeration to specify the target input
+// Enumerates the target input.
 namespace input {
-	enum Input {
-		COMMAND = 0,
-		SEMAPHORE = 4,
-		DATA = 8
-	};
+    enum Input {
+        COMMAND = 0,
+        SEMAPHORE = 4,
+        DATA = 8
+    };
 }
 
-/// Output enumeration
-// Enumeration to specify the desired output
+// Enumerates the desired output.
 namespace output {
-	enum Output {
-		STATUS = 0,
-		DATA = 4
-	};
+    enum Output {
+        STATUS = 0,
+        DATA = 4
+    };
 }
 
-/// Command enumeration
-// Enumeration used pass a command to semaphore
+// Enumerates the possible commands to pass to semaphore.
 namespace command {
-	enum Command {
-		CREATE = 0x1,
-		DESTROY = 0x2,
-		DOWN = 0X3,
-		UP = 0x4
-	};
+    enum Command {
+        CREATE = 0x1,
+        DESTROY = 0x2,
+        DOWN = 0X3,
+        UP = 0x4
+    };
 }
 
-/// Mask enumeration
-// Enumeration used to take a specific status bit from semaphore
+// Enumarestes the masks used to take a specific status bit from semaphore.
 namespace mask {
-	enum Mask {
-		DONE = 0x1,
-		ERROR = 0x2,
-		FULL = 0x4,
-		BLOCK = 0x8,
-		RESUME = 0x16,
-	};
+    enum Mask {
+        DONE = 0x1,
+        ERROR = 0x2,
+        FULL = 0x4,
+        BLOCK = 0x8,
+        RESUME = 0x16,
+    };
 }
 
-/// Semaphore class
-// Simple class to provide interaction with semaphores in hardware
+// Simple class to provide interaction with semaphores in hardware.
 class Semaphore {
-	// Base address of Avalon MM interface for semaphore's hardware
-	static const unsigned long long BASE_ADDRESS;
+    // Base address of Avalon MM interface for semaphore's hardware.
+    static const unsigned long long BASE_ADDRESS;
  public:
+    // Semaphore constructor.
+    // Executes the create command on semaphore's hardware.
+    // If the maximum number of semaphores has been reached, throws -1.
     Semaphore(unsigned = 1);
+    
+    // Semaphore destructor.
+    // Executes the destroy command on semaphore's hardware.
+    // If the specified semaphore does not exist in hardware, throws -2.
     ~Semaphore();
 
-    // Lock command (a.k.a. down)
-	void p();
-	// Unlock command (a.k.a. up)
-	void v();
+    // Lock command. Executes the down command on semaphore's hardware.
+    // As result, decrements the semaphore's counter (stored in hardware).
+    // If result is negative, the executing thread is blocked and  hardware
+    // status returns mask::BLOCK and mask::DONE. For simulation and test
+    // puposes, when this happens RUNNING is set to 0.
+    // If thread is blocked and there is no space left to store a pointer
+    // to it, hardware status returns mask::ERROR and this method throws -3.
+    // If the semaphore specified does not exist in hardware, throws -4.
+    void p();
+    
+    // Unlock command. Executes the up command on semaphore's hardware.
+    // As result, increments the semaphore's counter (stored in hardware).
+    // If previous value was negative, unblocks next thread from FIFO.
+    // The pointer is returned in output::DATA and status is set to mask::DONE
+    // and mask::RESUME.
+    // If the semaphore specified does not exist in hardware, throws -4. 
+    void v();
 
  private:
-	// Identifier taken from semaphore's hardware
-	unsigned int id;
+    // Identifier taken from semaphore's hardware.
+    unsigned int id;
 
-	void execute_command(unsigned command, unsigned data = 0);
-	unsigned read_data();
-	unsigned read_status();
+    // Method to abstract commands passed to semaphore's hardware.
+    void execute_command(unsigned command, unsigned data = 0);
+    // Method to read output::DATA from semaphore's hardware.
+    unsigned read_data();
+    // Method to read output::STATUS from semaphore's hardware.
+    unsigned read_status();
 };
 
 #endif /* SEMAPHORE_H_ */
